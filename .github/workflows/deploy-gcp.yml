@@ -37,9 +37,9 @@ jobs:
           GHCR_PAT: ${{ secrets.GHCR_PAT }}
           GITHUB_ACTOR: ${{ github.actor }}
         with:
-          host: ${{ secrets.GCP_VM_IP }}
-          username: ${{ secrets.GCP_SSH_USER }}
-          key: ${{ secrets.GCP_SSH_KEY }}
+          host: ${{ secrets.GCP_VM_PROD_HOST }}
+          username: ${{ secrets.GCP_VM_PROD_USER }}
+          key: ${{ secrets.GCP_VM_PROD_SSH_KEY }}
           port: 22
           envs: GHCR_PAT,GITHUB_ACTOR
           script: |
