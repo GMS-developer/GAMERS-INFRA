@@ -31,43 +31,80 @@ jobs:
           target: "~/app"
           overwrite: true
 
-      - name: Create .env and run deploy.sh
+      - name: Execute SSH command to deploy
         uses: appleboy/ssh-action@v1.0.3
         env:
-          DB_ROOT_PASSWORD: ${{ secrets.DB_ROOT_PASSWORD }}
-          DB_DATABASE: ${{ secrets.DB_DATABASE }}
-          DB_USER: ${{ secrets.DB_USER }}
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          DB_PORT: ${{ secrets.DB_PORT }}
-          REDIS_HOST: ${{ secrets.REDIS_HOST }}
-          REDIS_PORT: ${{ secrets.REDIS_PORT }}
-          REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
-          REDIS_DB: ${{ secrets.REDIS_DB }}
-          RABBITMQ_USER: ${{ secrets.RABBITMQ_USER }}
-          RABBITMQ_PASSWORD: ${{ secrets.RABBITMQ_PASSWORD }}
-          RABBITMQ_VHOST: ${{ secrets.RABBITMQ_VHOST }}
+          GHCR_PAT: ${{ secrets.GHCR_PAT }}
+          GITHUB_ACTOR: ${{ github.actor }}
         with:
-          host: ${{ secrets.GCP_VM_PROD_HOST }}
-          username: ${{ secrets.GCP_VM_PROD_USER }}
-          key: ${{ secrets.GCP_VM_PROD_SSH_KEY }}
-          envs: DB_ROOT_PASSWORD,DB_DATABASE,DB_USER,DB_PASSWORD,DB_PORT,REDIS_HOST,REDIS_PORT,REDIS_PASSWORD,REDIS_DB,RABBITMQ_USER,RABBITMQ_PASSWORD,RABBITMQ_VHOST
+          host: ${{ secrets.GCP_VM_IP }}
+          username: ${{ secrets.GCP_SSH_USER }}
+          key: ${{ secrets.GCP_SSH_KEY }}
+          port: 22
+          envs: GHCR_PAT,GITHUB_ACTOR
           script: |
-            cd ~/app
-
-            # Create .env file on VM
-            echo "MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD}" > .env
-            echo "MYSQL_DATABASE=${DB_DATABASE}" >> .env
-            echo "MYSQL_USER=${DB_USER}" >> .env
-            echo "MYSQL_PASSWORD=${DB_PASSWORD}" >> .env
-            echo "DB_PORT=${DB_PORT}" >> .env
-            echo "REDIS_HOST=${REDIS_HOST}" >> .env
-            echo "REDIS_PORT=${REDIS_PORT}" >> .env
-            echo "REDIS_PASSWORD=${REDIS_PASSWORD}" >> .env
-            echo "REDIS_DB=${REDIS_DB}" >> .env
-            echo "RABBITMQ_USER=${RABBITMQ_USER}" >> .env
-            echo "RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD}" >> .env
-            echo "RABBITMQ_VHOST=${RABBITMQ_VHOST}" >> .env
-
-            # Make deploy.sh executable and run
+            cd ~/GAMERS-INFRA
+            
+            git pull origin main
+            
+            echo "📝 Generating .env file..."
+            cat <<EOF > .env
+            # --- Database ---
+            DB_HOST=${{ secrets.DB_HOST }}
+            DB_PORT=${{ vars.DB_PORT }}
+            DB_USER=${{ secrets.DB_USER }}
+            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
+            DB_NAME=${{ secrets.DB_NAME }}
+            DB_ROOT_PASSWORD=${{ secrets.DB_ROOT_PASSWORD }}
+            
+            # --- Migrations ---
+            RUN_MIGRATIONS=${{ secrets.RUN_MIGRATIONS }}
+            MIGRATIONS_PATH=${{ secrets.MIGRATIONS_PATH }}
+            
+            # --- Redis ---
+            REDIS_HOST=${{ secrets.REDIS_HOST }}
+            REDIS_PORT=${{ vars.REDIS_PORT }}
+            REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}
+            REDIS_DB=${{ secrets.REDIS_DB }}
+            
+            # --- RabbitMQ ---
+            RABBITMQ_HOST=${{ secrets.RABBITMQ_HOST }}
+            RABBITMQ_PORT=${{ vars.RABBITMQ_PORT }}
+            RABBITMQ_USER=${{ secrets.RABBITMQ_USER }}
+            RABBITMQ_PASSWORD=${{ secrets.RABBITMQ_PASSWORD }}
+            RABBITMQ_VHOST=${{ secrets.RABBITMQ_VHOST }}
+            RABBITMQ_EXCHANGE=${{ secrets.RABBITMQ_EXCHANGE }}
+            RABBITMQ_QUEUE_NOTIFICATIONS=${{ secrets.RABBITMQ_QUEUE_NOTIFICATIONS }}
+            RABBITMQ_ROUTING_KEY=${{ secrets.RABBITMQ_ROUTING_KEY }}
+            RABBITMQ_REQUEST_QUEUE=${{ secrets.RABBITMQ_REQUEST_QUEUE }}
+            RABBITMQ_RESPONSE_QUEUE=${{ secrets.RABBITMQ_RESPONSE_QUEUE }}
+            RABBITMQ_PREFETCH_COUNT=${{ secrets.RABBITMQ_PREFETCH_COUNT }}
+            
+            # --- Application Config ---
+            PORT=${{ secrets.PORT }}
+            
+            # --- Security (JWT) ---
+            JWT_SECRET=${{ secrets.JWT_SECRET }}
+            JWT_REFRESH_SECRET=${{ secrets.JWT_REFRESH_SECRET }}
+            JWT_ACCESS_DURATION=${{ secrets.JWT_ACCESS_DURATION }}
+            JWT_REFRESH_DURATION=${{ secrets.JWT_REFRESH_DURATION }}
+            JWT_ISSUER=${{ secrets.JWT_ISSUER }}
+            
+            # --- Discord Integration ---
+            DISCORD_CLIENT_ID=${{ secrets.DISCORD_CLIENT_ID }}
+            DISCORD_CLIENT_SECRET=${{ secrets.DISCORD_CLIENT_SECRET }}
+            DISCORD_REDIRECT_URL=${{ secrets.DISCORD_REDIRECT_URL }}
+            DISCORD_BOT_TOKEN=${{ secrets.DISCORD_BOT_TOKEN }}
+            DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }}
+            
+            # --- External APIs ---
+            HENRIK_RIOT_API_KEY=${{ secrets.HENRIK_RIOT_API_KEY }}
+            WEB_URL=${{ secrets.WEB_URL }}
+            EOF
+            echo "✅ .env file created."
+            
+            echo "🔐 Logging in to GHCR..."
+            echo "$GHCR_PAT" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+            
             chmod +x deploy.sh
             ./deploy.sh
