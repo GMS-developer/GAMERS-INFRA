@@ -29,6 +29,13 @@ else
     echo "✅ Docker and Docker Compose are already available"
 fi
 
+if ! sudo systemctl is-active --quiet docker; then
+    echo "⚙️ Starting Docker daemon..."
+    sudo systemctl start docker
+fi
+
+sudo chmod 666 /var/run/docker.sock || true
+
 # Check if docker compose (V2) is available, install plugin if not
 if ! docker compose version &> /dev/null; then
     echo "📦 Installing docker-compose-plugin..."
