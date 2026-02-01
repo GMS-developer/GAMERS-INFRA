@@ -1,0 +1,10 @@
+creation_rules:
+  # .env 파일 암호화에 적용
+  - path_regex: \.env$
+    age: >-
+      age19p93cl337ly8fp6d2kt5jusy54gu4ktu5q6mazcdldam825n2pnq69p0qu
+
+  # secrets/ 디렉토리 내 모든 파일에 적용
+  - path_regex: secrets/.*$
+    age: >-
+      age19p93cl337ly8fp6d2kt5jusy54gu4ktu5q6mazcdldam825n2pnq69p0qu

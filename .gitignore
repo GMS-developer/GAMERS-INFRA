@@ -1,5 +1,6 @@
-# Environment variables
+# Environment variables (평문은 무시, 암호화된 파일은 추적)
 .env
+!.env.encrypted
 
 # MySQL data directory
 mysql_data/
