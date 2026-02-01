@@ -107,6 +107,8 @@ jobs:
             # --- External APIs ---
             HENRIK_RIOT_API_KEY=${{ secrets.HENRIK_RIOT_API_KEY }}
             WEB_URL=${{ secrets.WEB_URL }}
+            GIN_MODE=${{ secrets.GIN_MODE }}
+            
             EOF
             echo "✅ .env file created."
             
