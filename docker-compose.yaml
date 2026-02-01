@@ -78,9 +78,12 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      - mysql
-      - redis
-      - rabbitmq
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
     networks:
       - gamers-network
   discord-bot:
