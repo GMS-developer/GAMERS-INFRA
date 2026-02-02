@@ -128,13 +128,13 @@ migrate-force-network: ## Force set migration version or fix dirty state via Doc
 deploy: network ## 자동 배포 (migrator -> server 순서로 실행)
 	docker compose -p gamers-infra -f $(COMPOSE_FILE) up -d
 
-force: ## Dirty Flag 해결 (usage: make force v=3)
-	@if [ -z "$(v)" ]; then \
-		echo "Error: v parameter is required"; \
-		echo "Usage: make force v=3"; \
+force: ## Dirty Flag 해결 (usage: make force version=3)
+	@if [ -z "$(version)" ]; then \
+		echo "Error: version parameter is required"; \
+		echo "Usage: make force version=3"; \
 		exit 1; \
 	fi
-	$(MIGRATOR_RUN) --entrypoint "make migrate-force VERSION=$(v)" gamers-migrator
+	$(MIGRATOR_RUN) --entrypoint "make migrate-force version=$(version)" gamers-migrator
 
 migrate-down: ## 마이그레이션 롤백
 	$(MIGRATOR_RUN) --entrypoint "make migrate-down" gamers-migrator
@@ -158,7 +158,7 @@ help:
 	@echo ""
 	@echo "Init Container Migration:"
 	@echo "  make deploy                           - 자동 배포 (migrator 완료 후 서버 시작)"
-	@echo "  make force v=N                        - Dirty Flag 해결 (force version)"
+	@echo "  make force version=N                   - Dirty Flag 해결 (force version)"
 	@echo "  make migrate-down                     - 마이그레이션 롤백"
 	@echo ""
 	@echo "Docker Network Migration (Legacy):"
