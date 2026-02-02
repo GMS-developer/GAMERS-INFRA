@@ -1,5 +1,6 @@
 .PHONY: docker-up docker-down start stop restart logs ps clean network docker-test-up docker-test-down \
-	migrate-up-network migrate-down-network migrate-version-network migrate-force-network
+	migrate-up-network migrate-down-network migrate-version-network migrate-force-network \
+	deploy force migrate-down
 
 ENV_FILE := .env
 
@@ -12,12 +13,9 @@ endif
 COMPOSE_FILE := docker-compose.yaml
 TEST_DOCKER_FILE := docker-compose-test.yaml
 
-# Docker Network 기반 Migration (gamers-network 내에서 일회성 컨테이너로 실행)
-MIGRATE_DOCKER := docker run --rm --network gamers-network \
-	-v $(PWD)/db/migrations:/migrations \
-	migrate/migrate \
-	-path=/migrations \
-	-database "mysql://$(DB_USER):$(DB_PASSWORD)@tcp(gamers-mysql:$(DB_PORT))/$(DB_NAME)"
+# gamers-server 이미지를 활용한 Migration (Init Container 패턴)
+MIGRATOR_IMAGE := ghcr.io/for-gamers/gamers-be:latest
+MIGRATOR_RUN := docker compose -f $(COMPOSE_FILE) run --rm
 
 # 네트워크 생성
 network:
@@ -96,20 +94,20 @@ docker-test-down:
 	docker compose -f $(TEST_DOCKER_FILE) down -v
 
 # ========================================
-# Docker Network Migration
+# Docker Network Migration (Init Container 이미지 활용)
 # ========================================
 
 migrate-up-network: ## Run migrations via Docker network
 	@echo "🔄 Running migrations via Docker network..."
-	$(MIGRATE_DOCKER) up
+	$(MIGRATOR_RUN) gamers-migrator
 
 migrate-down-network: ## Rollback last migration via Docker network
 	@echo "⏪ Rolling back last migration via Docker network..."
-	$(MIGRATE_DOCKER) down 1
+	$(MIGRATOR_RUN) --entrypoint "make migrate-down" gamers-migrator
 
 migrate-version-network: ## Show migration version via Docker network
 	@echo "📊 Current migration version:"
-	@$(MIGRATE_DOCKER) version
+	$(MIGRATOR_RUN) --entrypoint "make migrate-version" gamers-migrator
 
 migrate-force-network: ## Force set migration version or fix dirty state via Docker network (usage: make migrate-force-network version=3)
 	@if [ -z "$(version)" ]; then \
@@ -120,8 +118,26 @@ migrate-force-network: ## Force set migration version or fix dirty state via Doc
 		exit 1; \
 	fi
 	@echo "🔧 Forcing migration version to $(version) via Docker network..."
-	$(MIGRATE_DOCKER) force $(version)
+	$(MIGRATOR_RUN) --entrypoint "make migrate-force VERSION=$(version)" gamers-migrator
 	@echo "✅ Migration version set to $(version)"
+
+# ========================================
+# Init Container 패턴 기반 배포/마이그레이션
+# ========================================
+
+deploy: network ## 자동 배포 (migrator -> server 순서로 실행)
+	docker compose -p gamers-infra -f $(COMPOSE_FILE) up -d
+
+force: ## Dirty Flag 해결 (usage: make force v=3)
+	@if [ -z "$(v)" ]; then \
+		echo "Error: v parameter is required"; \
+		echo "Usage: make force v=3"; \
+		exit 1; \
+	fi
+	$(MIGRATOR_RUN) --entrypoint "make migrate-force VERSION=$(v)" gamers-migrator
+
+migrate-down: ## 마이그레이션 롤백
+	$(MIGRATOR_RUN) --entrypoint "make migrate-down" gamers-migrator
 
 # 도움말
 help:
@@ -140,7 +156,12 @@ help:
 	@echo "  make redis-up/down/logs/cli"
 	@echo "  make rabbitmq-up/down/logs"
 	@echo ""
-	@echo "Docker Network Migration:"
+	@echo "Init Container Migration:"
+	@echo "  make deploy                           - 자동 배포 (migrator 완료 후 서버 시작)"
+	@echo "  make force v=N                        - Dirty Flag 해결 (force version)"
+	@echo "  make migrate-down                     - 마이그레이션 롤백"
+	@echo ""
+	@echo "Docker Network Migration (Legacy):"
 	@echo "  make migrate-up-network              - Run migrations via Docker network"
 	@echo "  make migrate-down-network             - Rollback last migration via Docker network"
 	@echo "  make migrate-version-network          - Show migration version via Docker network"

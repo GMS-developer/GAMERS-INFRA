@@ -70,6 +70,18 @@ services:
       start_period: 30s
     networks:
       - gamers-network
+  gamers-migrator:
+    image: ghcr.io/for-gamers/gamers-be:latest
+    container_name: gamers-migrator
+    env_file:
+      - .env
+    depends_on:
+      mysql:
+        condition: service_healthy
+    entrypoint: ["make", "migrate-up"]
+    restart: "no"
+    networks:
+      - gamers-network
   web-app:
     image: ghcr.io/for-gamers/gamers-be:latest
     container_name: gamers-web-server
@@ -78,8 +90,8 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      mysql:
-        condition: service_healthy
+      gamers-migrator:
+        condition: service_completed_successfully
       redis:
         condition: service_healthy
       rabbitmq:
