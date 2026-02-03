@@ -63,11 +63,11 @@ services:
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
     healthcheck:
-      test: [ "CMD", "rabbitmq-diagnostics", "ping" ]
+      test: [ "CMD", "rabbitmq-diagnostics", "check_port_connectivity" ]
       interval: 10s
-      timeout: 5s
+      timeout: 10s
       retries: 5
-      start_period: 30s
+      start_period: 45s
     networks:
       - gamers-network
   gamers-migrator:
