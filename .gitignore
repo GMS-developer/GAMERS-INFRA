@@ -20,4 +20,5 @@ rabbitmq_data/
 .DS_Store
 Thumbs.db
 
-.idea
+# Nginx SSL certificates
+nginx/ssl/

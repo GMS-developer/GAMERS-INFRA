@@ -87,8 +87,8 @@ services:
     container_name: gamers-web-server
     env_file:
       - .env
-    ports:
-      - "8080:8080"
+    expose:
+      - "8080"
     depends_on:
       gamers-migrator:
         condition: service_completed_successfully
@@ -105,6 +105,27 @@ services:
       - .env
     networks:
       - gamers-network
+
+  nginx:
+    image: nginx:alpine
+    container_name: gamers-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - web-app
+    networks:
+      - gamers-network
+    healthcheck:
+      test: ["CMD", "nginx", "-t"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
 networks:
   gamers-network:
