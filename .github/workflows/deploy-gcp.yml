@@ -37,12 +37,13 @@ jobs:
           GHCR_PAT: ${{ secrets.GHCR_PAT }}
           GITHUB_ACTOR: ${{ github.actor }}
           REPO_URL: "https://${{ github.actor }}:${{ secrets.GHCR_PAT }}@github.com/${{ github.repository }}.git"
+          ENV_FILE: ${{ secrets.ENV_FILE }}
         with:
           host: ${{ secrets.GCP_VM_PROD_HOST }}
           username: ${{ secrets.GCP_VM_PROD_USER }}
           key: ${{ secrets.GCP_VM_PROD_SSH_KEY }}
           port: 22
-          envs: GHCR_PAT,GITHUB_ACTOR,REPO_URL
+          envs: GHCR_PAT,GITHUB_ACTOR,REPO_URL,ENV_FILE
           script: |
             if [ ! -d "GAMERS-INFRA" ]; then
               echo "📂 Repository not found. Cloning..."
@@ -55,61 +56,7 @@ jobs:
             git pull origin main
             
             echo "📝 Generating .env file..."
-            cat <<EOF > .env
-            # --- Database ---
-            DB_HOST=${{ secrets.DB_HOST }}
-            DB_PORT=${{ vars.DB_PORT }}
-            DB_USER=${{ secrets.DB_USER }}
-            DB_PASSWORD=${{ secrets.DB_PASSWORD }}
-            DB_NAME=${{ secrets.DB_NAME }}
-            DB_ROOT_PASSWORD=${{ secrets.DB_ROOT_PASSWORD }}
-            
-            # --- Migrations ---
-            RUN_MIGRATIONS=${{ secrets.RUN_MIGRATIONS }}
-            MIGRATIONS_PATH=${{ secrets.MIGRATIONS_PATH }}
-            
-            # --- Redis ---
-            REDIS_HOST=${{ secrets.REDIS_HOST }}
-            REDIS_PORT=${{ vars.REDIS_PORT }}
-            REDIS_PASSWORD=${{ secrets.REDIS_PASSWORD }}
-            REDIS_DB=${{ secrets.REDIS_DB }}
-            
-            # --- RabbitMQ ---
-            RABBITMQ_HOST=${{ secrets.RABBITMQ_HOST }}
-            RABBITMQ_PORT=${{ vars.RABBITMQ_PORT }}
-            RABBITMQ_USER=${{ secrets.RABBITMQ_USER }}
-            RABBITMQ_PASSWORD=${{ secrets.RABBITMQ_PASSWORD }}
-            RABBITMQ_VHOST=${{ secrets.RABBITMQ_VHOST }}
-            RABBITMQ_EXCHANGE=${{ secrets.RABBITMQ_EXCHANGE }}
-            RABBITMQ_QUEUE_NOTIFICATIONS=${{ secrets.RABBITMQ_QUEUE_NOTIFICATIONS }}
-            RABBITMQ_ROUTING_KEY=${{ secrets.RABBITMQ_ROUTING_KEY }}
-            RABBITMQ_REQUEST_QUEUE=${{ secrets.RABBITMQ_REQUEST_QUEUE }}
-            RABBITMQ_RESPONSE_QUEUE=${{ secrets.RABBITMQ_RESPONSE_QUEUE }}
-            RABBITMQ_PREFETCH_COUNT=${{ secrets.RABBITMQ_PREFETCH_COUNT }}
-            
-            # --- Application Config ---
-            PORT=${{ secrets.PORT }}
-            
-            # --- Security (JWT) ---
-            JWT_SECRET=${{ secrets.JWT_SECRET }}
-            JWT_REFRESH_SECRET=${{ secrets.JWT_REFRESH_SECRET }}
-            JWT_ACCESS_DURATION=${{ secrets.JWT_ACCESS_DURATION }}
-            JWT_REFRESH_DURATION=${{ secrets.JWT_REFRESH_DURATION }}
-            JWT_ISSUER=${{ secrets.JWT_ISSUER }}
-            
-            # --- Discord Integration ---
-            DISCORD_CLIENT_ID=${{ secrets.DISCORD_CLIENT_ID }}
-            DISCORD_CLIENT_SECRET=${{ secrets.DISCORD_CLIENT_SECRET }}
-            DISCORD_REDIRECT_URL=${{ secrets.DISCORD_REDIRECT_URL }}
-            DISCORD_BOT_TOKEN=${{ secrets.DISCORD_BOT_TOKEN }}
-            DISCORD_TOKEN=${{ secrets.DISCORD_TOKEN }}
-            
-            # --- External APIs ---
-            HENRIK_RIOT_API_KEY=${{ secrets.HENRIK_RIOT_API_KEY }}
-            WEB_URL=${{ secrets.WEB_URL }}
-            GIN_MODE=${{ secrets.GIN_MODE }}
-            
-            EOF
+            echo "$ENV_FILE" > .env
             echo "✅ .env file created."
             
             if [ -z "$GHCR_PAT" ]; then
