@@ -8,6 +8,7 @@ on:
       - 'docker-compose.yaml'
       - 'deploy.sh'
       - 'mysql/init/**'
+      - 'nginx/**'
       - '.github/workflows/deploy-gcp.yml'
   workflow_dispatch:
 
