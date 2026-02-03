@@ -55,6 +55,14 @@ else
     echo "✅ Network already exists"
 fi
 
+# Check if SSL certificates exist on host
+if [ ! -f "/etc/nginx/ssl/gamers.io.kr.pem" ] || [ ! -f "/etc/nginx/ssl/gamers.io.kr.key" ]; then
+    echo "⚠️  WARNING: SSL certificates not found in /etc/nginx/ssl/"
+    echo "    Please ensure the following files exist on the server:"
+    echo "    - /etc/nginx/ssl/gamers.io.kr.pem"
+    echo "    - /etc/nginx/ssl/gamers.io.kr.key"
+fi
+
 # Stop and remove old containers
 echo "🛑 Stopping old containers..."
 docker compose down || true
