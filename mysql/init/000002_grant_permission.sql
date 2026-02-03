@@ -1,3 +1,3 @@
-GRANT ALL PRIVILEGES ON gamers_db.* TO 'gamers'@'%';
-GRANT ALL PRIVILEGES ON gamers_db.* TO 'gamers'@'localhost';
+GRANT ALL PRIVILEGES ON gamers.* TO 'gamers'@'%';
+GRANT ALL PRIVILEGES ON gamers.* TO 'gamers'@'localhost';
 FLUSH PRIVILEGES;

@@ -118,7 +118,7 @@ migrate-force-network: ## Force set migration version or fix dirty state via Doc
 		exit 1; \
 	fi
 	@echo "🔧 Forcing migration version to $(version) via Docker network..."
-	$(MIGRATOR_RUN) --entrypoint "make migrate-force VERSION=$(version)" gamers-migrator
+	$(MIGRATOR_RUN) --entrypoint "make migrate-force version=$(version)" gamers-migrator
 	@echo "✅ Migration version set to $(version)"
 
 # ========================================
