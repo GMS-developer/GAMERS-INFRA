@@ -21,16 +21,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Copy files to VM
-        uses: appleboy/scp-action@v0.1.7
-        with:
-          host: ${{ secrets.GCP_VM_PROD_HOST }}
-          username: ${{ secrets.GCP_VM_PROD_USER }}
-          key: ${{ secrets.GCP_VM_PROD_SSH_KEY }}
-          source: "docker-compose.yaml,deploy.sh,Makefile,mysql/init"
-          target: "~/app"
-          overwrite: true
-
       - name: Execute SSH command to deploy
         uses: appleboy/ssh-action@v1.0.3
         env:
