@@ -55,23 +55,10 @@ else
     echo "✅ Network already exists"
 fi
 
-# Check if SSL certificates exist on host
-if [ ! -f "/etc/nginx/ssl/gamers.io.kr.pem" ] || [ ! -f "/etc/nginx/ssl/gamers.io.kr.key" ]; then
-    echo "⚠️  WARNING: SSL certificates not found in /etc/nginx/ssl/"
-    echo "    Please ensure the following files exist on the server:"
-    echo "    - /etc/nginx/ssl/gamers.io.kr.pem"
-    echo "    - /etc/nginx/ssl/gamers.io.kr.key"
-fi
-
-# Copy nginx config files to host
-echo "📋 Copying nginx config files..."
-sudo mkdir -p /etc/nginx/conf.d
-# Docker may have auto-created these as directories on a previous failed run; remove if so
-[ -d "/etc/nginx/nginx.conf" ] && sudo rm -rf /etc/nginx/nginx.conf
-[ -d "/etc/nginx/conf.d/default.conf" ] && sudo rm -rf /etc/nginx/conf.d/default.conf
-sudo cp ./nginx/nginx.conf /etc/nginx/nginx.conf
-sudo cp ./nginx/conf.d/default.conf /etc/nginx/conf.d/default.conf
-echo "✅ Nginx config files copied"
+# Prepare certbot directories
+echo "📁 Preparing certbot directories..."
+mkdir -p nginx/ssl/certbot nginx/certbot/webroot logs
+echo "✅ Directories ready"
 
 # Stop and remove old containers
 echo "🛑 Stopping old containers..."
@@ -81,9 +68,16 @@ docker compose down || true
 echo "📥 Pulling latest images..."
 docker compose pull
 
-# Start containers
-echo "🏃 Starting containers..."
-docker compose up -d
+# Issue certificate if not exists, otherwise start full stack directly
+if [ ! -d "./nginx/ssl/certbot/live/api.gamers.io.kr" ]; then
+    echo "🔐 SSL 인증서가 없습니다. Let's Encrypt 발급을 시작합니다..."
+    chmod +x init-letsencrypt.sh
+    ./init-letsencrypt.sh
+else
+    echo "✅ SSL 인증서가 이미 존재합니다."
+    echo "🏃 Starting containers..."
+    docker compose up -d
+fi
 
 # Wait for services to be healthy
 echo "⏳ Waiting for services to be healthy..."
