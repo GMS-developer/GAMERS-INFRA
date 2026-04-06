@@ -73,7 +73,8 @@ docker compose -f "$COMPOSE_FILE" run --rm certbot certonly \
     --email "$EMAIL" \
     --agree-tos \
     --no-eff-email \
-    --non-interactive
+    --non-interactive \
+    --force-renewal
 
 echo "✅ 인증서 발급 완료"
 
