@@ -81,7 +81,7 @@ done
 # ──────────────────────────────────────────
 echo ""
 echo "🔐 Let's Encrypt 인증서 발급 중..."
-docker compose -f "$COMPOSE_FILE" run --rm certbot certbot certonly \
+docker compose -f "$COMPOSE_FILE" run --rm certbot certonly \
     --webroot \
     -w /var/www/certbot \
     -d "$DOMAIN" \
