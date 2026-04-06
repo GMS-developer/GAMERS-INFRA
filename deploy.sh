@@ -63,6 +63,13 @@ if [ ! -f "/etc/nginx/ssl/gamers.io.kr.pem" ] || [ ! -f "/etc/nginx/ssl/gamers.i
     echo "    - /etc/nginx/ssl/gamers.io.kr.key"
 fi
 
+# Copy nginx config files to host
+echo "📋 Copying nginx config files..."
+sudo mkdir -p /etc/nginx/conf.d
+sudo cp ./nginx/nginx.conf /etc/nginx/nginx.conf
+sudo cp ./nginx/conf.d/default.conf /etc/nginx/conf.d/default.conf
+echo "✅ Nginx config files copied"
+
 # Stop and remove old containers
 echo "🛑 Stopping old containers..."
 docker compose down || true
