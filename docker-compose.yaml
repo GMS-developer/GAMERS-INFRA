@@ -71,7 +71,7 @@ services:
     networks:
       - gamers-network
   gamers-migrator:
-    image: ghcr.io/for-gamers/gamers-be:latest
+    image: ghcr.io/gms-developer/gamers-be:latest
     container_name: gamers-migrator
     env_file:
       - .env
@@ -83,7 +83,7 @@ services:
     networks:
       - gamers-network
   web-app:
-    image: ghcr.io/for-gamers/gamers-be:latest
+    image: ghcr.io/gms-developer/gamers-be:latest
     container_name: gamers-web-server
     env_file:
       - .env
