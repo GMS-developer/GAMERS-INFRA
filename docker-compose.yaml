@@ -99,7 +99,7 @@ services:
     networks:
       - gamers-network
   discord-bot:
-    image: ghcr.io/for-gamers/gamers-bot:latest
+    image: ghcr.io/gms-developer/gamers-bot:latest
     container_name: gamers-discord-bot
     env_file:
       - .env
