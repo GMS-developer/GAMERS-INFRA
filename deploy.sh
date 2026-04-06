@@ -66,6 +66,9 @@ fi
 # Copy nginx config files to host
 echo "📋 Copying nginx config files..."
 sudo mkdir -p /etc/nginx/conf.d
+# Docker may have auto-created these as directories on a previous failed run; remove if so
+[ -d "/etc/nginx/nginx.conf" ] && sudo rm -rf /etc/nginx/nginx.conf
+[ -d "/etc/nginx/conf.d/default.conf" ] && sudo rm -rf /etc/nginx/conf.d/default.conf
 sudo cp ./nginx/nginx.conf /etc/nginx/nginx.conf
 sudo cp ./nginx/conf.d/default.conf /etc/nginx/conf.d/default.conf
 echo "✅ Nginx config files copied"
