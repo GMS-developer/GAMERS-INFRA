@@ -129,11 +129,11 @@ services:
       retries: 3
 
   certbot:
-    image: certbot/certbot:latest
+    image: certbot/dns-cloudflare:latest
     container_name: gamers-certbot
     volumes:
       - ./nginx/ssl/certbot:/etc/letsencrypt
-      - ./nginx/certbot/webroot:/var/www/certbot
+      - ./nginx/certbot/cloudflare.ini:/etc/cloudflare/cloudflare.ini:ro
     # init-letsencrypt.sh / renew-cert.sh 가 직접 실행 — 상시 기동 불필요
     restart: "no"
 

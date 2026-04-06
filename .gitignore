@@ -11,6 +11,11 @@ rabbitmq_data/
 
 # Logs
 *.log
+logs/
+
+# Certbot credentials (API token)
+nginx/certbot/cloudflare.ini
+nginx/ssl/
 
 # IDE
 .vscode/

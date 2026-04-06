@@ -5,26 +5,31 @@ set -e
 # Configuration
 # ──────────────────────────────────────────
 DOMAIN="api.gamers.io.kr"
-EMAIL="${CERTBOT_EMAIL:-}"          # .env 또는 환경변수에서 읽음
 COMPOSE_FILE="docker-compose.yaml"
 CERT_DIR="./nginx/ssl/certbot"
-WEBROOT_DIR="./nginx/certbot/webroot"
-CONF_DIR="./nginx/conf.d"
+CLOUDFLARE_INI="./nginx/certbot/cloudflare.ini"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-# .env에서 CERTBOT_EMAIL 읽기 (환경변수 미설정 시)
-if [ -z "$EMAIL" ] && [ -f "$SCRIPT_DIR/.env" ]; then
+# .env에서 값 읽기
+if [ -f "$SCRIPT_DIR/.env" ]; then
     EMAIL=$(grep -E '^CERTBOT_EMAIL=' "$SCRIPT_DIR/.env" | cut -d'=' -f2 | tr -d '"' | tr -d "'")
+    CF_TOKEN=$(grep -E '^CLOUDFLARE_API_TOKEN=' "$SCRIPT_DIR/.env" | cut -d'=' -f2 | tr -d '"' | tr -d "'")
 fi
 
+EMAIL="${CERTBOT_EMAIL:-$EMAIL}"
+CF_TOKEN="${CLOUDFLARE_API_TOKEN:-$CF_TOKEN}"
+
 if [ -z "$EMAIL" ]; then
-    echo "❌ CERTBOT_EMAIL이 설정되지 않았습니다."
-    echo "   .env 파일에 CERTBOT_EMAIL=your@email.com 을 추가하거나"
-    echo "   환경변수로 export CERTBOT_EMAIL=your@email.com 을 설정하세요."
+    echo "❌ CERTBOT_EMAIL이 설정되지 않았습니다. .env를 확인하세요."
     exit 1
 fi
 
-echo "🔐 Let's Encrypt 인증서 초기화 시작"
+if [ -z "$CF_TOKEN" ]; then
+    echo "❌ CLOUDFLARE_API_TOKEN이 설정되지 않았습니다. .env를 확인하세요."
+    exit 1
+fi
+
+echo "🔐 Let's Encrypt 인증서 초기화 시작 (DNS-01 / Cloudflare)"
 echo "   도메인: $DOMAIN"
 echo "   이메일: $EMAIL"
 
@@ -33,7 +38,7 @@ echo "   이메일: $EMAIL"
 # ──────────────────────────────────────────
 echo ""
 echo "📁 디렉토리 생성..."
-mkdir -p "$CERT_DIR" "$WEBROOT_DIR"
+mkdir -p "$CERT_DIR" "$(dirname "$CLOUDFLARE_INI")"
 
 # ──────────────────────────────────────────
 # 2. 이미 인증서가 존재하면 스킵
@@ -45,45 +50,25 @@ if [ -d "$CERT_DIR/live/$DOMAIN" ]; then
 fi
 
 # ──────────────────────────────────────────
-# 3. 기존 nginx 중지
+# 3. Cloudflare 자격증명 파일 생성
 # ──────────────────────────────────────────
 echo ""
-echo "🛑 기존 nginx 컨테이너 중지..."
-docker compose -f "$COMPOSE_FILE" stop nginx 2>/dev/null || true
+echo "🔑 Cloudflare 자격증명 파일 생성..."
+cat > "$CLOUDFLARE_INI" <<EOF
+dns_cloudflare_api_token = ${CF_TOKEN}
+EOF
+chmod 600 "$CLOUDFLARE_INI"
+echo "✅ cloudflare.ini 생성 완료"
 
 # ──────────────────────────────────────────
-# 4. HTTP-only 설정으로 교체 (HTTPS 블록 없이 nginx 기동)
-# ──────────────────────────────────────────
-echo ""
-echo "🔄 HTTP-only 설정으로 nginx 기동..."
-cp "$CONF_DIR/default.conf" "$CONF_DIR/default.conf.bak"
-cp "$CONF_DIR/default.conf.init" "$CONF_DIR/default.conf"
-
-docker compose -f "$COMPOSE_FILE" up -d nginx
-
-# nginx 기동 대기
-echo "⏳ nginx 기동 대기..."
-for i in $(seq 1 15); do
-    if docker compose -f "$COMPOSE_FILE" exec -T nginx nginx -t 2>/dev/null; then
-        echo "✅ nginx 준비 완료"
-        break
-    fi
-    if [ "$i" -eq 15 ]; then
-        echo "❌ nginx 기동 실패"
-        cp "$CONF_DIR/default.conf.bak" "$CONF_DIR/default.conf"
-        exit 1
-    fi
-    sleep 2
-done
-
-# ──────────────────────────────────────────
-# 5. 인증서 발급
+# 4. 인증서 발급 (DNS-01, nginx 중단 불필요)
 # ──────────────────────────────────────────
 echo ""
 echo "🔐 Let's Encrypt 인증서 발급 중..."
 docker compose -f "$COMPOSE_FILE" run --rm certbot certonly \
-    --webroot \
-    -w /var/www/certbot \
+    --dns-cloudflare \
+    --dns-cloudflare-credentials /etc/cloudflare/cloudflare.ini \
+    --dns-cloudflare-propagation-seconds 30 \
     -d "$DOMAIN" \
     --email "$EMAIL" \
     --agree-tos \
@@ -93,17 +78,15 @@ docker compose -f "$COMPOSE_FILE" run --rm certbot certonly \
 echo "✅ 인증서 발급 완료"
 
 # ──────────────────────────────────────────
-# 6. 정식 HTTPS 설정 복원 및 nginx 재시작
+# 5. nginx 시작 (또는 재시작)
 # ──────────────────────────────────────────
 echo ""
-echo "🔄 HTTPS 설정 복원..."
-cp "$CONF_DIR/default.conf.bak" "$CONF_DIR/default.conf"
-
-docker compose -f "$COMPOSE_FILE" restart nginx
-echo "✅ nginx HTTPS 모드로 재시작 완료"
+echo "🔄 nginx 시작..."
+docker compose -f "$COMPOSE_FILE" up -d
+echo "✅ 전체 스택 기동 완료"
 
 # ──────────────────────────────────────────
-# 7. cron 자동 갱신 등록 (이미 등록된 경우 스킵)
+# 6. cron 자동 갱신 등록 (이미 등록된 경우 스킵)
 # ──────────────────────────────────────────
 echo ""
 echo "⏰ 자동 갱신 cron 등록..."

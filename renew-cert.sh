@@ -10,8 +10,9 @@ cd "$SCRIPT_DIR"
 
 # certbot renew (만료 30일 이내일 때만 실제 갱신)
 docker compose -f "$COMPOSE_FILE" run --rm certbot renew \
-    --webroot \
-    -w /var/www/certbot \
+    --dns-cloudflare \
+    --dns-cloudflare-credentials /etc/cloudflare/cloudflare.ini \
+    --dns-cloudflare-propagation-seconds 30 \
     --non-interactive \
     --quiet
 
