@@ -44,14 +44,20 @@ jobs:
             echo "HOST=${{ secrets.GCP_VM_PROD_HOST }}" >> $GITHUB_ENV
             echo "USER=${{ secrets.GCP_VM_PROD_USER }}" >> $GITHUB_ENV
             echo "SSH_KEY=${{ secrets.GCP_VM_PROD_SSH_KEY }}" >> $GITHUB_ENV
-            echo "ENV_FILE=${{ secrets.PROD_ENV_FILE }}" >> $GITHUB_ENV
             echo "TARGET_DIR=GAMERS-INFRA-PROD" >> $GITHUB_ENV
+          
+            echo "ENV_FILE<<EOF" >> $GITHUB_ENV
+            echo "${{ secrets.PROD_ENV_FILE }}" >> $GITHUB_ENV
+            echo "EOF" >> $GITHUB_ENV
           else
             echo "HOST=${{ secrets.GCP_VM_STAGING_HOST }}" >> $GITHUB_ENV
             echo "USER=${{ secrets.GCP_VM_STAGING_USER }}" >> $GITHUB_ENV
             echo "SSH_KEY=${{ secrets.GCP_VM_STAGING_SSH_KEY }}" >> $GITHUB_ENV
-            echo "ENV_FILE=${{ secrets.STAGING_ENV_FILE }}" >> $GITHUB_ENV
             echo "TARGET_DIR=GAMERS-INFRA-STAGING" >> $GITHUB_ENV
+
+            echo "ENV_FILE<<EOF" >> $GITHUB_ENV
+            echo "${{ secrets.STAGING_ENV_FILE }}" >> $GITHUB_ENV
+            echo "EOF" >> $GITHUB_ENV
           fi
 
       - name: Copy files to GCP VM
