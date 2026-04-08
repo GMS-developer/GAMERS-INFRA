@@ -40,26 +40,36 @@ jobs:
       - name: Set deployment environment
         id: set-env
         env:
-          # 시크릿을 미리 스텝 환경 변수에 할당 (멀티라인/특수문자 문제 방지)
           PROD_ENV_RAW: ${{ secrets.PROD_ENV_FILE }}
           STAGING_ENV_RAW: ${{ secrets.STAGING_ENV_FILE }}
+          PROD_SSH_KEY: ${{ secrets.GCP_VM_PROD_SSH_KEY }}
+          STAGING_SSH_KEY: ${{ secrets.GCP_VM_STAGING_SSH_KEY }}
         run: |
           if [[ "${{ github.ref }}" == "refs/heads/main" || "${{ github.event.pull_request.base.ref }}" == "main" ]]; then
             echo "HOST=${{ secrets.GCP_VM_PROD_HOST }}" >> $GITHUB_ENV
             echo "USER=${{ secrets.GCP_VM_PROD_USER }}" >> $GITHUB_ENV
-            echo "SSH_KEY=${{ secrets.GCP_VM_PROD_SSH_KEY }}" >> $GITHUB_ENV
             echo "TARGET_DIR=GAMERS-INFRA-PROD" >> $GITHUB_ENV
           
-            # EOF를 사용하여 안전하게 주입
+            # SSH_KEY 멀티라인 처리
+            echo "SSH_KEY<<EOF" >> $GITHUB_ENV
+            echo "$PROD_SSH_KEY" >> $GITHUB_ENV
+            echo "EOF" >> $GITHUB_ENV
+          
+            # ENV_FILE 멀티라인 처리
             echo "ENV_FILE<<EOF" >> $GITHUB_ENV
             echo "$PROD_ENV_RAW" >> $GITHUB_ENV
             echo "EOF" >> $GITHUB_ENV
           else
             echo "HOST=${{ secrets.GCP_VM_STAGING_HOST }}" >> $GITHUB_ENV
             echo "USER=${{ secrets.GCP_VM_STAGING_USER }}" >> $GITHUB_ENV
-            echo "SSH_KEY=${{ secrets.GCP_VM_STAGING_SSH_KEY }}" >> $GITHUB_ENV
             echo "TARGET_DIR=GAMERS-INFRA-STAGING" >> $GITHUB_ENV
           
+            # SSH_KEY 멀티라인 처리
+            echo "SSH_KEY<<EOF" >> $GITHUB_ENV
+            echo "$STAGING_SSH_KEY" >> $GITHUB_ENV
+            echo "EOF" >> $GITHUB_ENV
+          
+            # ENV_FILE 멀티라인 처리
             echo "ENV_FILE<<EOF" >> $GITHUB_ENV
             echo "$STAGING_ENV_RAW" >> $GITHUB_ENV
             echo "EOF" >> $GITHUB_ENV
