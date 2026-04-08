@@ -1,9 +1,22 @@
-name: Deploy to GCP Compute Engine
+name: Deploy to GCP Compute Engine (Staging & Production)
 
 on:
   push:
     branches:
       - main
+      - develop
+    paths:
+      - 'docker-compose.yaml'
+      - 'deploy.sh'
+      - 'init-letsencrypt.sh'
+      - 'renew-cert.sh'
+      - 'mysql/init/**'
+      - 'nginx/**'
+      - '.github/workflows/deploy-gcp.yml'
+  pull_request:
+    branches:
+      - main
+      - develop
     paths:
       - 'docker-compose.yaml'
       - 'deploy.sh'
@@ -16,23 +29,40 @@ on:
 
 jobs:
   deploy:
-    name: Deploy Docker Compose to GCP VM
+    name: Deploy to ${{ github.ref_name || github.base_ref }} Server
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'push' || github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Set deployment environment
+        id: set-env
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/main" || "${{ github.event.pull_request.base.ref }}" == "main" ]]; then
+            echo "HOST=${{ secrets.GCP_VM_PROD_HOST }}" >> $GITHUB_ENV
+            echo "USER=${{ secrets.GCP_VM_PROD_USER }}" >> $GITHUB_ENV
+            echo "SSH_KEY=${{ secrets.GCP_VM_PROD_SSH_KEY }}" >> $GITHUB_ENV
+            echo "ENV_FILE=${{ secrets.PROD_ENV_FILE }}" >> $GITHUB_ENV
+            echo "TARGET_DIR=GAMERS-INFRA-PROD" >> $GITHUB_ENV
+          else
+            echo "HOST=${{ secrets.GCP_VM_STAGING_HOST }}" >> $GITHUB_ENV
+            echo "USER=${{ secrets.GCP_VM_STAGING_USER }}" >> $GITHUB_ENV
+            echo "SSH_KEY=${{ secrets.GCP_VM_STAGING_SSH_KEY }}" >> $GITHUB_ENV
+            echo "ENV_FILE=${{ secrets.STAGING_ENV_FILE }}" >> $GITHUB_ENV
+            echo "TARGET_DIR=GAMERS-INFRA-STAGING" >> $GITHUB_ENV
+          fi
+
       - name: Copy files to GCP VM
         uses: appleboy/scp-action@v0.1.7
         with:
-          host: ${{ secrets.GCP_VM_PROD_HOST }}
-          username: ${{ secrets.GCP_VM_PROD_USER }}
-          key: ${{ secrets.GCP_VM_PROD_SSH_KEY }}
+          host: ${{ env.HOST }}
+          username: ${{ env.USER }}
+          key: ${{ env.SSH_KEY }}
           port: 22
           source: "docker-compose.yaml,deploy.sh,init-letsencrypt.sh,renew-cert.sh,Makefile,nginx,mysql"
-          target: "GAMERS-INFRA"
+          target: ${{ env.TARGET_DIR }}
           strip_components: 0
 
       - name: Execute SSH command to deploy
@@ -40,15 +70,16 @@ jobs:
         env:
           GHCR_PAT: ${{ secrets.GHCR_PAT }}
           GITHUB_ACTOR: ${{ github.actor }}
-          ENV_FILE: ${{ secrets.ENV_FILE }}
+          ENV_FILE: ${{ env.ENV_FILE }}
+          TARGET_DIR: ${{ env.TARGET_DIR }}
         with:
-          host: ${{ secrets.GCP_VM_PROD_HOST }}
-          username: ${{ secrets.GCP_VM_PROD_USER }}
-          key: ${{ secrets.GCP_VM_PROD_SSH_KEY }}
+          host: ${{ env.HOST }}
+          username: ${{ env.USER }}
+          key: ${{ env.SSH_KEY }}
           port: 22
-          envs: GHCR_PAT,GITHUB_ACTOR,ENV_FILE
+          envs: GHCR_PAT,GITHUB_ACTOR,ENV_FILE,TARGET_DIR
           script: |
-            cd GAMERS-INFRA
+            cd $TARGET_DIR
 
             echo "📝 Generating .env file..."
             echo "$ENV_FILE" > .env
