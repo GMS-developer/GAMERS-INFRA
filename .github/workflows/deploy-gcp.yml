@@ -63,7 +63,7 @@ jobs:
             echo "ENV_FILE<<EOF" >> $GITHUB_ENV
             echo "$STAGING_ENV_RAW" >> $GITHUB_ENV
             echo "EOF" >> $GITHUB_ENV
-        fi
+          fi
 
       - name: Copy files to GCP VM
         uses: appleboy/scp-action@v0.1.7
