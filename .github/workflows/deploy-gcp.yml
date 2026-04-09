@@ -81,6 +81,17 @@ jobs:
             echo "EOF" >> $GITHUB_ENV
           fi
 
+      - name: Fix permissions on GCP VM before SCP
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ env.HOST }}
+          username: ${{ env.USER }}
+          key: ${{ env.SSH_KEY }}
+          port: 22
+          script: |
+            mkdir -p ${{ env.TARGET_DIR }}
+            sudo chown -R "$USER" ${{ env.TARGET_DIR }}/prometheus ${{ env.TARGET_DIR }}/rabbitmq ${{ env.TARGET_DIR }}/grafana || true
+
       - name: Copy files to GCP VM
         uses: appleboy/scp-action@v0.1.7
         with:
