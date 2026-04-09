@@ -25,4 +25,4 @@ nginx/ssl/
 .DS_Store
 Thumbs.db
 
-
+.env.staging
