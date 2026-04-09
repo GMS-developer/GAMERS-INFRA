@@ -79,7 +79,7 @@ services:
       mysql:
         condition: service_healthy
     entrypoint: ["make", "migrate-up"]
-    restart: "no"
+    restart: on-failure
     networks:
       - gamers-network
   web-app:
