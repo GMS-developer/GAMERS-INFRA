@@ -78,7 +78,9 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
-    entrypoint: ["make", "migrate-up"]
+    volumes:
+      - ./migrate-entrypoint.sh:/migrate-entrypoint.sh:ro
+    entrypoint: ["/bin/sh", "/migrate-entrypoint.sh"]
     restart: on-failure
     networks:
       - gamers-network
