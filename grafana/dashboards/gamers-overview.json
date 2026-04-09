@@ -1,0 +1,285 @@
+{
+  "title": "GAMERS Overview",
+  "uid": "gamers-overview",
+  "timezone": "browser",
+  "schemaVersion": 38,
+  "refresh": "30s",
+  "panels": [
+    {
+      "type": "row",
+      "title": "API",
+      "gridPos": { "x": 0, "y": 0, "w": 24, "h": 1 },
+      "collapsed": false
+    },
+    {
+      "type": "stat",
+      "title": "HTTP Requests/s",
+      "gridPos": { "x": 0, "y": 1, "w": 6, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 100 }, { "color": "red", "value": 500 }] }
+        }
+      },
+      "targets": [{ "expr": "sum(rate(http_requests_total[1m]))", "legendFormat": "req/s" }]
+    },
+    {
+      "type": "stat",
+      "title": "HTTP Error Rate",
+      "gridPos": { "x": 6, "y": 1, "w": 6, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 0.01 }, { "color": "red", "value": 0.05 }] }
+        }
+      },
+      "targets": [{ "expr": "sum(rate(http_requests_total{status=~\"5..\"}[1m])) / sum(rate(http_requests_total[1m]))", "legendFormat": "error rate" }]
+    },
+    {
+      "type": "stat",
+      "title": "HTTP P99 Latency",
+      "gridPos": { "x": 12, "y": 1, "w": 6, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 0.5 }, { "color": "red", "value": 1 }] }
+        }
+      },
+      "targets": [{ "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[1m])) by (le))", "legendFormat": "p99" }]
+    },
+    {
+      "type": "stat",
+      "title": "Goroutines",
+      "gridPos": { "x": 18, "y": 1, "w": 6, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "value" },
+      "fieldConfig": { "defaults": { "unit": "short" } },
+      "targets": [{ "expr": "go_goroutines", "legendFormat": "goroutines" }]
+    },
+    {
+      "type": "timeseries",
+      "title": "HTTP Request Rate by Status",
+      "gridPos": { "x": 0, "y": 5, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "reqps" } },
+      "targets": [{ "expr": "sum(rate(http_requests_total[1m])) by (status)", "legendFormat": "{{status}}" }]
+    },
+    {
+      "type": "timeseries",
+      "title": "HTTP Latency Percentiles",
+      "gridPos": { "x": 12, "y": 5, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "s" } },
+      "targets": [
+        { "expr": "histogram_quantile(0.50, sum(rate(http_request_duration_seconds_bucket[1m])) by (le))", "legendFormat": "p50" },
+        { "expr": "histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[1m])) by (le))", "legendFormat": "p95" },
+        { "expr": "histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[1m])) by (le))", "legendFormat": "p99" }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "MySQL",
+      "gridPos": { "x": 0, "y": 13, "w": 24, "h": 1 },
+      "collapsed": false
+    },
+    {
+      "type": "stat",
+      "title": "MySQL Up",
+      "gridPos": { "x": 0, "y": 14, "w": 4, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background" },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [{ "type": "value", "options": { "0": { "text": "DOWN", "color": "red" }, "1": { "text": "UP", "color": "green" } } }]
+        }
+      },
+      "targets": [{ "expr": "mysql_up", "legendFormat": "" }]
+    },
+    {
+      "type": "stat",
+      "title": "QPS",
+      "gridPos": { "x": 4, "y": 14, "w": 5, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "reqps" } },
+      "targets": [{ "expr": "sum(rate(mysql_global_status_queries[1m]))", "legendFormat": "qps" }]
+    },
+    {
+      "type": "stat",
+      "title": "Connections",
+      "gridPos": { "x": 9, "y": 14, "w": 5, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "short" } },
+      "targets": [{ "expr": "mysql_global_status_threads_connected", "legendFormat": "connections" }]
+    },
+    {
+      "type": "stat",
+      "title": "Slow Queries/s",
+      "gridPos": { "x": 14, "y": 14, "w": 5, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "red", "value": 1 }] }
+        }
+      },
+      "targets": [{ "expr": "rate(mysql_global_status_slow_queries[1m])", "legendFormat": "slow queries" }]
+    },
+    {
+      "type": "timeseries",
+      "title": "MySQL QPS",
+      "gridPos": { "x": 0, "y": 18, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "reqps" } },
+      "targets": [
+        { "expr": "rate(mysql_global_status_commands_total{command=\"select\"}[1m])", "legendFormat": "select" },
+        { "expr": "rate(mysql_global_status_commands_total{command=\"insert\"}[1m])", "legendFormat": "insert" },
+        { "expr": "rate(mysql_global_status_commands_total{command=\"update\"}[1m])", "legendFormat": "update" },
+        { "expr": "rate(mysql_global_status_commands_total{command=\"delete\"}[1m])", "legendFormat": "delete" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "MySQL Connections",
+      "gridPos": { "x": 12, "y": 18, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "short" } },
+      "targets": [
+        { "expr": "mysql_global_status_threads_connected", "legendFormat": "connected" },
+        { "expr": "mysql_global_status_threads_running", "legendFormat": "running" },
+        { "expr": "mysql_global_variables_max_connections", "legendFormat": "max" }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "Redis",
+      "gridPos": { "x": 0, "y": 26, "w": 24, "h": 1 },
+      "collapsed": false
+    },
+    {
+      "type": "stat",
+      "title": "Redis Up",
+      "gridPos": { "x": 0, "y": 27, "w": 4, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "options": { "reduceOptions": { "calcs": ["lastNotNull"] }, "colorMode": "background" },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [{ "type": "value", "options": { "0": { "text": "DOWN", "color": "red" }, "1": { "text": "UP", "color": "green" } } }]
+        }
+      },
+      "targets": [{ "expr": "redis_up", "legendFormat": "" }]
+    },
+    {
+      "type": "stat",
+      "title": "Memory Used",
+      "gridPos": { "x": 4, "y": 27, "w": 5, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "bytes" } },
+      "targets": [{ "expr": "redis_memory_used_bytes", "legendFormat": "used" }]
+    },
+    {
+      "type": "stat",
+      "title": "Connected Clients",
+      "gridPos": { "x": 9, "y": 27, "w": 5, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "short" } },
+      "targets": [{ "expr": "redis_connected_clients", "legendFormat": "clients" }]
+    },
+    {
+      "type": "stat",
+      "title": "Hit Rate",
+      "gridPos": { "x": 14, "y": 27, "w": 5, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "red", "value": null }, { "color": "yellow", "value": 0.8 }, { "color": "green", "value": 0.95 }] }
+        }
+      },
+      "targets": [{ "expr": "rate(redis_keyspace_hits_total[1m]) / (rate(redis_keyspace_hits_total[1m]) + rate(redis_keyspace_misses_total[1m]))", "legendFormat": "hit rate" }]
+    },
+    {
+      "type": "timeseries",
+      "title": "Redis Commands/s",
+      "gridPos": { "x": 0, "y": 31, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "ops" } },
+      "targets": [{ "expr": "rate(redis_commands_processed_total[1m])", "legendFormat": "commands/s" }]
+    },
+    {
+      "type": "timeseries",
+      "title": "Redis Memory",
+      "gridPos": { "x": 12, "y": 31, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "bytes" } },
+      "targets": [
+        { "expr": "redis_memory_used_bytes", "legendFormat": "used" },
+        { "expr": "redis_memory_max_bytes", "legendFormat": "max" }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "RabbitMQ",
+      "gridPos": { "x": 0, "y": 39, "w": 24, "h": 1 },
+      "collapsed": false
+    },
+    {
+      "type": "stat",
+      "title": "Ready Messages",
+      "gridPos": { "x": 0, "y": 40, "w": 6, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 1000 }, { "color": "red", "value": 5000 }] }
+        }
+      },
+      "targets": [{ "expr": "sum(rabbitmq_queue_messages_ready)", "legendFormat": "ready" }]
+    },
+    {
+      "type": "stat",
+      "title": "Unacked Messages",
+      "gridPos": { "x": 6, "y": 40, "w": 6, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }, { "color": "yellow", "value": 100 }, { "color": "red", "value": 500 }] }
+        }
+      },
+      "targets": [{ "expr": "sum(rabbitmq_queue_messages_unacked)", "legendFormat": "unacked" }]
+    },
+    {
+      "type": "stat",
+      "title": "Consumers",
+      "gridPos": { "x": 12, "y": 40, "w": 6, "h": 4 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "short" } },
+      "targets": [{ "expr": "sum(rabbitmq_queue_consumers)", "legendFormat": "consumers" }]
+    },
+    {
+      "type": "timeseries",
+      "title": "RabbitMQ Message Rate",
+      "gridPos": { "x": 0, "y": 44, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "msgps" } },
+      "targets": [
+        { "expr": "sum(rate(rabbitmq_queue_messages_published_total[1m]))", "legendFormat": "published" },
+        { "expr": "sum(rate(rabbitmq_queue_messages_delivered_total[1m]))", "legendFormat": "delivered" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "RabbitMQ Queue Depth",
+      "gridPos": { "x": 12, "y": 44, "w": 12, "h": 8 },
+      "datasource": { "type": "prometheus", "uid": "prometheus" },
+      "fieldConfig": { "defaults": { "unit": "short" } },
+      "targets": [{ "expr": "rabbitmq_queue_messages_ready", "legendFormat": "{{queue}}" }]
+    }
+  ]
+}

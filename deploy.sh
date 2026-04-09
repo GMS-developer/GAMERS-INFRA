@@ -21,7 +21,7 @@ echo "✅ Directories ready"
 
 # Prepare grafana provisioning
 echo "📁 Preparing grafana provisioning..."
-mkdir -p grafana/provisioning/datasources grafana/provisioning/dashboards
+mkdir -p grafana/provisioning/datasources grafana/provisioning/dashboards grafana/dashboards
 echo "✅ Grafana provisioning directories ready"
 
 # Prepare prometheus config
