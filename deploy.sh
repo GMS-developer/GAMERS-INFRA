@@ -19,6 +19,11 @@ echo "📁 Preparing certbot directories..."
 mkdir -p nginx/ssl/certbot nginx/certbot/webroot logs
 echo "✅ Directories ready"
 
+# Prepare grafana provisioning
+echo "📁 Preparing grafana provisioning..."
+mkdir -p grafana/provisioning/datasources grafana/provisioning/dashboards
+echo "✅ Grafana provisioning directories ready"
+
 # Prepare prometheus config
 echo "📁 Preparing prometheus config..."
 sudo mkdir -p prometheus rabbitmq
