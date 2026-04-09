@@ -12,6 +12,9 @@ on:
       - 'renew-cert.sh'
       - 'mysql/init/**'
       - 'nginx/**'
+      - 'prometheus/**'
+      - 'rabbitmq/**'
+      - 'grafana/**'
       - '.github/workflows/deploy-gcp.yml'
   pull_request:
     branches:
@@ -24,6 +27,9 @@ on:
       - 'renew-cert.sh'
       - 'mysql/init/**'
       - 'nginx/**'
+      - 'prometheus/**'
+      - 'rabbitmq/**'
+      - 'grafana/**'
       - '.github/workflows/deploy-gcp.yml'
   workflow_dispatch:
 
@@ -82,7 +88,7 @@ jobs:
           username: ${{ env.USER }}
           key: ${{ env.SSH_KEY }}
           port: 22
-          source: "docker-compose.yaml,deploy.sh,init-letsencrypt.sh,renew-cert.sh,Makefile,nginx,mysql"
+          source: "docker-compose.yaml,deploy.sh,init-letsencrypt.sh,renew-cert.sh,Makefile,nginx,mysql,prometheus,rabbitmq,grafana"
           target: ${{ env.TARGET_DIR }}
           strip_components: 0
 
