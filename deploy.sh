@@ -21,10 +21,11 @@ echo "✅ Directories ready"
 
 # Prepare prometheus config
 echo "📁 Preparing prometheus config..."
-mkdir -p prometheus
+sudo mkdir -p prometheus rabbitmq
+sudo chown -R "$(whoami)" prometheus rabbitmq
 # Remove if mistakenly created as a directory by Docker (root-owned)
 if [ -d prometheus/prometheus.yml ]; then
-    sudo rm -rf prometheus/prometheus.yml
+    rm -rf prometheus/prometheus.yml
 fi
 if [ ! -f prometheus/prometheus.yml ]; then
     cat > prometheus/prometheus.yml << 'EOF'
@@ -62,10 +63,9 @@ fi
 
 # Prepare rabbitmq config
 echo "📁 Preparing rabbitmq config..."
-mkdir -p rabbitmq
 # Remove if mistakenly created as a directory by Docker (root-owned)
 if [ -d rabbitmq/enabled_plugins ]; then
-    sudo rm -rf rabbitmq/enabled_plugins
+    rm -rf rabbitmq/enabled_plugins
 fi
 if [ ! -f rabbitmq/enabled_plugins ]; then
     echo "[rabbitmq_management,rabbitmq_prometheus]." > rabbitmq/enabled_plugins
