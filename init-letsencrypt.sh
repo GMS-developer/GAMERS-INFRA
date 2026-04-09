@@ -65,7 +65,7 @@ echo "✅ cloudflare.ini 생성 완료"
 # ──────────────────────────────────────────
 echo ""
 echo "🔐 Let's Encrypt 인증서 발급 중..."
-docker compose -f "$COMPOSE_FILE" run --rm certbot certonly \
+docker-compose -f "$COMPOSE_FILE" run --rm certbot certonly \
     --dns-cloudflare \
     --dns-cloudflare-credentials /etc/cloudflare/cloudflare.ini \
     --dns-cloudflare-propagation-seconds 30 \
@@ -83,7 +83,7 @@ echo "✅ 인증서 발급 완료"
 # ──────────────────────────────────────────
 echo ""
 echo "🔄 nginx 시작..."
-docker compose -f "$COMPOSE_FILE" up -d
+docker-compose -f "$COMPOSE_FILE" up -d
 echo "✅ 전체 스택 기동 완료"
 
 # ──────────────────────────────────────────
