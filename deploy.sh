@@ -19,6 +19,53 @@ echo "📁 Preparing certbot directories..."
 mkdir -p nginx/ssl/certbot nginx/certbot/webroot logs
 echo "✅ Directories ready"
 
+# Prepare prometheus config
+echo "📁 Preparing prometheus config..."
+mkdir -p prometheus
+if [ ! -f prometheus/prometheus.yml ]; then
+    cat > prometheus/prometheus.yml << 'EOF'
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  - job_name: "gamers-api"
+    static_configs:
+      - targets: ["web-app:8080"]
+    metrics_path: /metrics
+
+  - job_name: "mysql"
+    static_configs:
+      - targets: ["gamers-mysql-exporter:9104"]
+
+  - job_name: "redis"
+    static_configs:
+      - targets: ["gamers-redis-exporter:9121"]
+
+  - job_name: "rabbitmq"
+    static_configs:
+      - targets: ["gamers-rabbitmq:15692"]
+    metrics_path: /metrics
+EOF
+    echo "✅ prometheus.yml created"
+else
+    echo "✅ prometheus.yml already exists"
+fi
+
+# Prepare rabbitmq config
+echo "📁 Preparing rabbitmq config..."
+mkdir -p rabbitmq
+if [ ! -f rabbitmq/enabled_plugins ]; then
+    echo "[rabbitmq_management,rabbitmq_prometheus]." > rabbitmq/enabled_plugins
+    echo "✅ enabled_plugins created"
+else
+    echo "✅ enabled_plugins already exists"
+fi
+
 # Stop and remove old containers
 echo "🛑 Stopping old containers..."
 docker-compose down || true
