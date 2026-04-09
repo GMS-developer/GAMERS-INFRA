@@ -38,7 +38,7 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
-    command: [ "redis-server", "--appendonly", "yes" ]
+    command: [ "redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD}" ]
     healthcheck:
       test: [ "CMD", "redis-cli", "ping" ]
       interval: 5s
@@ -192,7 +192,7 @@ services:
     env_file:
       - .env
     environment:
-      - DATA_SOURCE_NAME=${DB_USER}:${DB_PASSWORD}@(gamers-mysql:3306)/${DB_NAME}
+      - DATA_SOURCE_NAME=${DB_USER}:${DB_PASSWORD}@(gamers-mysql:3306)/
     depends_on:
       mysql:
         condition: service_healthy
