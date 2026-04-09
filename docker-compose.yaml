@@ -112,12 +112,16 @@ services:
     image: nginx:alpine
     container_name: gamers-nginx
     restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      - DOMAIN=${DOMAIN}
     ports:
       - "80:80"
       - "443:443"
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - ./nginx/templates:/etc/nginx/templates:ro
       - ./nginx/certbot/webroot:/var/www/certbot:ro
       - ./nginx/ssl/certbot:/etc/letsencrypt:ro
     depends_on:

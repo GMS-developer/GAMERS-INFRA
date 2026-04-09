@@ -27,8 +27,16 @@ docker-compose down || true
 echo "📥 Pulling latest images..."
 docker-compose pull
 
+# Read DOMAIN from .env
+DOMAIN=$(grep -E '^DOMAIN=' .env | cut -d'=' -f2 | tr -d '"' | tr -d "'")
+
+if [ -z "$DOMAIN" ]; then
+    echo "❌ DOMAIN이 .env에 설정되지 않았습니다."
+    exit 1
+fi
+
 # Issue certificate if not exists, otherwise start full stack directly
-if [ ! -d "./nginx/ssl/certbot/live/api.gamers.io.kr" ]; then
+if [ ! -d "./nginx/ssl/certbot/live/$DOMAIN" ]; then
     echo "🔐 SSL 인증서가 없습니다. Let's Encrypt 발급을 시작합니다..."
     chmod +x init-letsencrypt.sh
     ./init-letsencrypt.sh
