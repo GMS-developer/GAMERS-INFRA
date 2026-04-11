@@ -12,6 +12,9 @@ on:
       - 'renew-cert.sh'
       - 'mysql/init/**'
       - 'nginx/**'
+      - 'prometheus/**'
+      - 'rabbitmq/**'
+      - 'grafana/**'
       - '.github/workflows/deploy-gcp.yml'
   pull_request:
     branches:
@@ -24,6 +27,9 @@ on:
       - 'renew-cert.sh'
       - 'mysql/init/**'
       - 'nginx/**'
+      - 'prometheus/**'
+      - 'rabbitmq/**'
+      - 'grafana/**'
       - '.github/workflows/deploy-gcp.yml'
   workflow_dispatch:
 
@@ -39,20 +45,52 @@ jobs:
 
       - name: Set deployment environment
         id: set-env
+        env:
+          PROD_ENV_RAW: ${{ secrets.PROD_ENV_FILE }}
+          STAGING_ENV_RAW: ${{ secrets.STAGING_ENV_FILE }}
+          PROD_SSH_KEY: ${{ secrets.GCP_VM_PROD_SSH_KEY }}
+          STAGING_SSH_KEY: ${{ secrets.GCP_VM_STAGING_SSH_KEY }}
         run: |
           if [[ "${{ github.ref }}" == "refs/heads/main" || "${{ github.event.pull_request.base.ref }}" == "main" ]]; then
             echo "HOST=${{ secrets.GCP_VM_PROD_HOST }}" >> $GITHUB_ENV
             echo "USER=${{ secrets.GCP_VM_PROD_USER }}" >> $GITHUB_ENV
-            echo "SSH_KEY=${{ secrets.GCP_VM_PROD_SSH_KEY }}" >> $GITHUB_ENV
-            echo "ENV_FILE=${{ secrets.PROD_ENV_FILE }}" >> $GITHUB_ENV
             echo "TARGET_DIR=GAMERS-INFRA-PROD" >> $GITHUB_ENV
+          
+            # SSH_KEY 멀티라인 처리
+            echo "SSH_KEY<<EOF" >> $GITHUB_ENV
+            echo "$PROD_SSH_KEY" >> $GITHUB_ENV
+            echo "EOF" >> $GITHUB_ENV
+          
+            # ENV_FILE 멀티라인 처리
+            echo "ENV_FILE<<EOF" >> $GITHUB_ENV
+            echo "$PROD_ENV_RAW" >> $GITHUB_ENV
+            echo "EOF" >> $GITHUB_ENV
           else
             echo "HOST=${{ secrets.GCP_VM_STAGING_HOST }}" >> $GITHUB_ENV
             echo "USER=${{ secrets.GCP_VM_STAGING_USER }}" >> $GITHUB_ENV
-            echo "SSH_KEY=${{ secrets.GCP_VM_STAGING_SSH_KEY }}" >> $GITHUB_ENV
-            echo "ENV_FILE=${{ secrets.STAGING_ENV_FILE }}" >> $GITHUB_ENV
             echo "TARGET_DIR=GAMERS-INFRA-STAGING" >> $GITHUB_ENV
+          
+            # SSH_KEY 멀티라인 처리
+            echo "SSH_KEY<<EOF" >> $GITHUB_ENV
+            echo "$STAGING_SSH_KEY" >> $GITHUB_ENV
+            echo "EOF" >> $GITHUB_ENV
+          
+            # ENV_FILE 멀티라인 처리
+            echo "ENV_FILE<<EOF" >> $GITHUB_ENV
+            echo "$STAGING_ENV_RAW" >> $GITHUB_ENV
+            echo "EOF" >> $GITHUB_ENV
           fi
+
+      - name: Fix permissions on GCP VM before SCP
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ env.HOST }}
+          username: ${{ env.USER }}
+          key: ${{ env.SSH_KEY }}
+          port: 22
+          script: |
+            mkdir -p ${{ env.TARGET_DIR }}
+            sudo chown -R "$USER" ${{ env.TARGET_DIR }}/prometheus ${{ env.TARGET_DIR }}/rabbitmq ${{ env.TARGET_DIR }}/grafana || true
 
       - name: Copy files to GCP VM
         uses: appleboy/scp-action@v0.1.7
@@ -61,7 +99,7 @@ jobs:
           username: ${{ env.USER }}
           key: ${{ env.SSH_KEY }}
           port: 22
-          source: "docker-compose.yaml,deploy.sh,init-letsencrypt.sh,renew-cert.sh,Makefile,nginx,mysql"
+          source: "docker-compose.yaml,deploy.sh,init-letsencrypt.sh,renew-cert.sh,Makefile,nginx,mysql,prometheus,rabbitmq,grafana"
           target: ${{ env.TARGET_DIR }}
           strip_components: 0
 

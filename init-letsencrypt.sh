@@ -4,7 +4,6 @@ set -e
 # ──────────────────────────────────────────
 # Configuration
 # ──────────────────────────────────────────
-DOMAIN="api.gamers.io.kr"
 COMPOSE_FILE="docker-compose.yaml"
 CERT_DIR="./nginx/ssl/certbot"
 CLOUDFLARE_INI="./nginx/certbot/cloudflare.ini"
@@ -12,12 +11,19 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # .env에서 값 읽기
 if [ -f "$SCRIPT_DIR/.env" ]; then
+    DOMAIN=$(grep -E '^DOMAIN=' "$SCRIPT_DIR/.env" | cut -d'=' -f2 | tr -d '"' | tr -d "'")
     EMAIL=$(grep -E '^CERTBOT_EMAIL=' "$SCRIPT_DIR/.env" | cut -d'=' -f2 | tr -d '"' | tr -d "'")
     CF_TOKEN=$(grep -E '^CLOUDFLARE_API_TOKEN=' "$SCRIPT_DIR/.env" | cut -d'=' -f2 | tr -d '"' | tr -d "'")
 fi
 
+DOMAIN="${DOMAIN:-$DOMAIN}"
 EMAIL="${CERTBOT_EMAIL:-$EMAIL}"
 CF_TOKEN="${CLOUDFLARE_API_TOKEN:-$CF_TOKEN}"
+
+if [ -z "$DOMAIN" ]; then
+    echo "❌ DOMAIN이 설정되지 않았습니다. .env를 확인하세요."
+    exit 1
+fi
 
 if [ -z "$EMAIL" ]; then
     echo "❌ CERTBOT_EMAIL이 설정되지 않았습니다. .env를 확인하세요."
@@ -65,7 +71,7 @@ echo "✅ cloudflare.ini 생성 완료"
 # ──────────────────────────────────────────
 echo ""
 echo "🔐 Let's Encrypt 인증서 발급 중..."
-docker compose -f "$COMPOSE_FILE" run --rm certbot certonly \
+docker-compose -f "$COMPOSE_FILE" run --rm certbot certonly \
     --dns-cloudflare \
     --dns-cloudflare-credentials /etc/cloudflare/cloudflare.ini \
     --dns-cloudflare-propagation-seconds 30 \
@@ -73,8 +79,7 @@ docker compose -f "$COMPOSE_FILE" run --rm certbot certonly \
     --email "$EMAIL" \
     --agree-tos \
     --no-eff-email \
-    --non-interactive \
-    --force-renewal
+    --non-interactive
 
 echo "✅ 인증서 발급 완료"
 
@@ -83,7 +88,7 @@ echo "✅ 인증서 발급 완료"
 # ──────────────────────────────────────────
 echo ""
 echo "🔄 nginx 시작..."
-docker compose -f "$COMPOSE_FILE" up -d
+docker-compose -f "$COMPOSE_FILE" up -d
 echo "✅ 전체 스택 기동 완료"
 
 # ──────────────────────────────────────────
