@@ -26,3 +26,5 @@ nginx/ssl/
 Thumbs.db
 
 .env.staging
+
+/riot/riot.txt
