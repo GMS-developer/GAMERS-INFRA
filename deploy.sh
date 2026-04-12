@@ -80,8 +80,13 @@ else
 fi
 
 # Stop and remove old containers
-echo "🛑 Stopping old containers..."
-docker-compose down || true
+if [ "${RESET_VOLUMES}" = "true" ]; then
+    echo "🗑️  RESET_VOLUMES=true: Removing containers and volumes..."
+    docker-compose down -v --remove-orphans || true
+else
+    echo "🛑 Stopping old containers..."
+    docker-compose down || true
+fi
 
 # Pull latest images
 echo "📥 Pulling latest images..."

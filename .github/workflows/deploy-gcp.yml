@@ -32,6 +32,15 @@ on:
       - 'grafana/**'
       - '.github/workflows/deploy-gcp.yml'
   workflow_dispatch:
+    inputs:
+      reset_volumes:
+        description: 'DB 볼륨 초기화 (dirty migration 복구용)'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
 
 jobs:
   deploy:
@@ -110,12 +119,13 @@ jobs:
           GITHUB_ACTOR: ${{ github.actor }}
           ENV_FILE: ${{ env.ENV_FILE }}
           TARGET_DIR: ${{ env.TARGET_DIR }}
+          RESET_VOLUMES: ${{ github.event.inputs.reset_volumes || 'false' }}
         with:
           host: ${{ env.HOST }}
           username: ${{ env.USER }}
           key: ${{ env.SSH_KEY }}
           port: 22
-          envs: GHCR_PAT,GITHUB_ACTOR,ENV_FILE,TARGET_DIR
+          envs: GHCR_PAT,GITHUB_ACTOR,ENV_FILE,TARGET_DIR,RESET_VOLUMES
           script: |
             cd $TARGET_DIR
 
