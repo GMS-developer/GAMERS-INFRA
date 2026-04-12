@@ -58,6 +58,12 @@ server {
         add_header Content-Type text/plain;
     }
 
+    # Riot Games verification
+    location = /riot.txt {
+        root /var/www/static;
+        add_header Content-Type text/plain;
+    }
+
     # Proxy to Grafana
     location /grafana/ {
         proxy_pass http://grafana_backend;
