@@ -70,6 +70,7 @@ services:
       timeout: 10s
       retries: 5
       start_period: 45s
+    restart: unless-stopped
     networks:
       - gamers-network
   gamers-migrator:
@@ -100,6 +101,7 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+    restart: unless-stopped
     networks:
       - gamers-network
   discord-bot:
@@ -107,6 +109,7 @@ services:
     container_name: gamers-discord-bot
     env_file:
       - .env
+    restart: unless-stopped
     networks:
       - gamers-network
 
