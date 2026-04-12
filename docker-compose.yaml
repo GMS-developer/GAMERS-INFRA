@@ -29,6 +29,10 @@ services:
       - --max-connections=150
       - --thread-cache-size=8
       - --table-open-cache=256
+      - --binlog-expire-logs-seconds=259200
+      - --slow-query-log=1
+      - --slow-query-log-file=/var/lib/mysql/slow.log
+      - --long-query-time=2
     mem_limit: 768m
     mem_reservation: 256m
 
