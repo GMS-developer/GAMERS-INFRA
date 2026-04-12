@@ -79,10 +79,9 @@ else
     echo "✅ enabled_plugins already exists"
 fi
 
-# Stop and remove old containers (including volumes for clean .env reload)
-echo "🛑 Stopping old containers and removing volumes..."
-docker-compose down -v --remove-orphans || true
-docker system prune -f || true
+# Stop and remove old containers
+echo "🛑 Stopping old containers..."
+docker-compose down || true
 
 # Pull latest images
 echo "📥 Pulling latest images..."
