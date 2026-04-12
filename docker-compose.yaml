@@ -57,6 +57,7 @@ services:
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
       RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_VHOST}
       RABBITMQ_ENABLED_PLUGINS_FILE: /etc/rabbitmq/enabled_plugins
+      RABBITMQ_VM_MEMORY_HIGH_WATERMARK: "0.6"
       TZ: "Asia/Tokyo"
     ports:
       - "5672:5672"
@@ -71,6 +72,8 @@ services:
       retries: 5
       start_period: 45s
     restart: unless-stopped
+    mem_limit: 512m
+    mem_reservation: 256m
     networks:
       - gamers-network
   gamers-migrator:
