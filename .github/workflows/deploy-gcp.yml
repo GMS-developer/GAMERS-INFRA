@@ -120,12 +120,13 @@ jobs:
           ENV_FILE: ${{ env.ENV_FILE }}
           TARGET_DIR: ${{ env.TARGET_DIR }}
           RESET_VOLUMES: ${{ github.event.inputs.reset_volumes || 'false' }}
+          RIOT_VERIFICATION_CODE: ${{ secrets.RIOT_VERIFICATION_CODE }}
         with:
           host: ${{ env.HOST }}
           username: ${{ env.USER }}
           key: ${{ env.SSH_KEY }}
           port: 22
-          envs: GHCR_PAT,GITHUB_ACTOR,ENV_FILE,TARGET_DIR,RESET_VOLUMES
+          envs: GHCR_PAT,GITHUB_ACTOR,ENV_FILE,TARGET_DIR,RESET_VOLUMES,RIOT_VERIFICATION_CODE
           script: |
             cd $TARGET_DIR
 
