@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-DB_URL="mysql://${DB_USER}:${DB_PASSWORD}@tcp(gamers-mysql:3306)/${DB_NAME}"
+DB_URL="mysql://${DB_USER}:${DB_PASSWORD}@tcp(gamers-mysql:3306)/${DB_NAME}?multiStatementEnabled=true"
 
 echo "🔄 Running database migrations..."
 
