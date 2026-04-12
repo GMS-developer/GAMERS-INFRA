@@ -102,7 +102,21 @@ if [ ! -d "./nginx/ssl/certbot/live/$DOMAIN" ]; then
     ./init-letsencrypt.sh
 else
     echo "✅ SSL 인증서가 이미 존재합니다."
-    echo "🏃 Starting containers..."
+
+    # Start infra services first
+    echo "🏃 Starting infrastructure services..."
+    docker-compose up -d mysql redis rabbitmq
+
+    # Run migrator in foreground so logs are visible
+    echo "🔄 Running migrator (foreground)..."
+    if ! docker-compose up --no-deps gamers-migrator; then
+        echo "❌ Migration failed! Logs:"
+        docker-compose logs gamers-migrator
+        exit 1
+    fi
+
+    # Start remaining services
+    echo "🏃 Starting application services..."
     docker-compose up -d
 fi
 
