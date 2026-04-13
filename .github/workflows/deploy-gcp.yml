@@ -108,7 +108,7 @@ jobs:
           username: ${{ env.USER }}
           key: ${{ env.SSH_KEY }}
           port: 22
-          source: "docker-compose.yaml,deploy.sh,init-letsencrypt.sh,renew-cert.sh,Makefile,nginx,mysql,prometheus,rabbitmq,grafana"
+          source: "docker-compose.yaml,deploy.sh,migrate-entrypoint.sh,init-letsencrypt.sh,renew-cert.sh,Makefile,nginx,mysql,prometheus,rabbitmq,grafana"
           target: ${{ env.TARGET_DIR }}
           strip_components: 0
 
