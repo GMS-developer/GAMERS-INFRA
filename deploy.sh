@@ -16,8 +16,14 @@ fi
 
 # Prepare certbot directories
 echo "📁 Preparing certbot directories..."
-mkdir -p nginx/ssl/certbot nginx/certbot/webroot logs
+mkdir -p nginx/ssl/certbot nginx/certbot/webroot nginx/static logs
 echo "✅ Directories ready"
+
+# Write Riot Games verification file from secret
+if [ -n "$RIOT_VERIFICATION_CODE" ]; then
+    echo "$RIOT_VERIFICATION_CODE" > nginx/static/riot.txt
+    echo "✅ riot.txt created"
+fi
 
 # Prepare grafana provisioning
 echo "📁 Preparing grafana provisioning..."

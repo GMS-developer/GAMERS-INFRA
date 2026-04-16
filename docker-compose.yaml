@@ -24,6 +24,18 @@ services:
     volumes:
       - ./mysql_data:/var/lib/mysql
       - ./mysql/init:/docker-entrypoint-initdb.d
+    command:
+      - --innodb-buffer-pool-size=256M
+      - --max-connections=150
+      - --thread-cache-size=8
+      - --table-open-cache=256
+      - --binlog-expire-logs-seconds=259200
+      - --slow-query-log=1
+      - --slow-query-log-file=/var/lib/mysql/slow.log
+      - --long-query-time=2
+    mem_limit: 768m
+    mem_reservation: 256m
+
   redis:
     image: redis:7-alpine
     container_name: gamers-redis
@@ -38,15 +50,25 @@ services:
       - "6379:6379"
     volumes:
       - redis_data:/data
-    command: [ "redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD}" ]
+    command: [
+      "redis-server",
+      "--appendonly", "yes",
+      "--requirepass", "${REDIS_PASSWORD}",
+      "--maxmemory", "256mb",
+      "--maxmemory-policy", "volatile-lru",
+      "--save", ""
+    ]
     healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
+      test: [ "CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping" ]
       interval: 5s
       timeout: 3s
       retries: 5
     networks:
       - gamers-network
     restart: unless-stopped
+    mem_limit: 384m
+    mem_reservation: 128m
+
   rabbitmq:
     image: rabbitmq:4.1-management-alpine
     container_name: gamers-rabbitmq
@@ -64,14 +86,19 @@ services:
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
       - ./rabbitmq/enabled_plugins:/etc/rabbitmq/enabled_plugins:ro
+      - ./rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
     healthcheck:
       test: [ "CMD", "rabbitmq-diagnostics", "check_port_connectivity" ]
       interval: 10s
       timeout: 10s
       retries: 5
       start_period: 45s
+    restart: unless-stopped
+    mem_limit: 512m
+    mem_reservation: 256m
     networks:
       - gamers-network
+
   gamers-migrator:
     image: ghcr.io/gms-developer/gamers-be:latest
     container_name: gamers-migrator
@@ -86,6 +113,7 @@ services:
     restart: on-failure
     networks:
       - gamers-network
+
   web-app:
     image: ghcr.io/gms-developer/gamers-be:latest
     container_name: gamers-web-server
@@ -100,13 +128,20 @@ services:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+    restart: unless-stopped
+    mem_limit: 256m
+    mem_reservation: 64m
     networks:
       - gamers-network
+
   discord-bot:
     image: ghcr.io/gms-developer/gamers-bot:latest
     container_name: gamers-discord-bot
     env_file:
       - .env
+    restart: unless-stopped
+    mem_limit: 128m
+    mem_reservation: 32m
     networks:
       - gamers-network
 
@@ -136,6 +171,8 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+    mem_limit: 64m
+    mem_reservation: 16m
 
   certbot:
     image: certbot/dns-cloudflare:latest
@@ -143,7 +180,6 @@ services:
     volumes:
       - ./nginx/ssl/certbot:/etc/letsencrypt
       - ./nginx/certbot/cloudflare.ini:/etc/cloudflare/cloudflare.ini:ro
-    # init-letsencrypt.sh / renew-cert.sh 가 직접 실행 — 상시 기동 불필요
     restart: "no"
 
   prometheus:
@@ -158,11 +194,14 @@ services:
     command:
       - "--config.file=/etc/prometheus/prometheus.yml"
       - "--storage.tsdb.path=/prometheus"
-      - "--storage.tsdb.retention.time=30d"
+      - "--storage.tsdb.retention.time=15d"
+      - "--storage.tsdb.retention.size=1GB"
       - "--web.enable-lifecycle"
       - "--web.enable-remote-write-receiver"
     networks:
       - gamers-network
+    mem_limit: 384m
+    mem_reservation: 128m
 
   grafana:
     image: grafana/grafana:latest
@@ -186,6 +225,8 @@ services:
       - prometheus
     networks:
       - gamers-network
+    mem_limit: 192m
+    mem_reservation: 64m
 
   mysql-exporter:
     image: prom/mysqld-exporter:latest
@@ -200,6 +241,8 @@ services:
         condition: service_healthy
     networks:
       - gamers-network
+    mem_limit: 64m
+    mem_reservation: 16m
 
   redis-exporter:
     image: oliver006/redis_exporter:latest
@@ -215,6 +258,8 @@ services:
         condition: service_healthy
     networks:
       - gamers-network
+    mem_limit: 64m
+    mem_reservation: 16m
 
 networks:
   gamers-network:
